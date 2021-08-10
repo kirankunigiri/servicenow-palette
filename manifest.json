@@ -1,0 +1,37 @@
+{
+	"name": "ServiceNow Palette",
+	"version": "1.0.0",
+	"description": "A chrome extension for ServiceNow",
+	"manifest_version": 2,
+	"background": {
+		"scripts": ["background.js"],
+		"persistent": true
+	},
+	"content_scripts": [
+		{
+			"matches": ["http://*/*", "https://*/*"],
+			"js": ["content.js"],
+			"css": ["spotlight.css"],
+			"run_at": "document_end"
+		}
+	],
+	"permissions": [
+		"storage",
+		"tabs",
+        "webRequest",
+        "webNavigation",
+        "management",
+		"https://*/",
+		"http://*/",
+		"https://www.surf.service-now.com/*"
+	],
+	"icons": {
+		"16": "servicenow.png",
+		"48": "servicenow.png",
+		"128": "servicenow.png"
+	},
+	"browser_action": {
+		"default_title": "YouTube Dark Toggle",
+		"default_popup": "index.html"
+	  }
+}

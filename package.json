@@ -1,0 +1,23 @@
+{
+  "name": "servicenow-palette",
+  "version": "1.0.0",
+  "description": "A chrome extension for ServiceNow",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kirankunigiri/servicenow-palette.git"
+  },
+  "author": "Kiran Kunigiri",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kirankunigiri/servicenow-palette/issues"
+  },
+  "homepage": "https://github.com/kirankunigiri/servicenow-palette#readme",
+  "dependencies": {
+    "@types/chrome": "0.0.154",
+    "types": "^0.1.1"
+  }
+}
