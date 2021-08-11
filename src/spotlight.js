@@ -22,7 +22,7 @@ var tagsData = {
 
 function toggleSpotlightSearch() {
 	var x = document.getElementById("spotlight");
-	if (x.style.display === "none") {
+	if (x.style.display == "none" || x.style.display == '') {
 		x.style.display = "flex";
 	} else {
 		x.style.display = "none";
@@ -32,6 +32,7 @@ function toggleSpotlightSearch() {
 function clearSearch() {
 	getSpotlightInput().value = ''
 	tagsData.tags = []
+	updateFilterState()
 	resultsData.sections = getData(filterState.current, '').sections
 }
 
@@ -47,7 +48,7 @@ function getTableTag() {
 	}
 }
 function getFilterURL() {
-	var table = getTableTag()
+	var table = getTableTag().name
 	var tags = tagsData.tags
 	var filters = []
 	for (var i = 1; i < tags.length; i+= 3) {
@@ -203,7 +204,6 @@ onload2 = function() {
 			listenerDiv.removeEventListener("keydown", windowKeyDown)
 		}
 
-		console.log('CHANGES MADE');
 		var htmlDivs = document.querySelectorAll('html')
 		for (var htmlDiv of htmlDivs) {
 			listenerDivs.push(htmlDiv)
@@ -297,7 +297,7 @@ onload2 = function() {
 
 		// Enter Key - change page
 		if (e.keyCode == 13) {
-			var url
+			var url;
 			var numTags = tagsData.tags.length
 			if (numTags > 1) {
 				// FILTER SEARCH
@@ -314,7 +314,7 @@ onload2 = function() {
 			} else if (getSearchText().length > 0 && numTags == 1) {
 				// GENERAL TEXT SEARCH
 				// Someone has entered in text. Check if there is a tag, and only proceed if there is 1 tag
-				var tableName = getTableTag()
+				var tableName = getTableTag().name
 				url = `https://desktop.service-now.com/${tableName}_list.do?sysparm_query=GOTO123TEXTQUERY321=${getSearchText()}`;
 			} else {
 				// LIST TABLE
@@ -323,6 +323,8 @@ onload2 = function() {
 			}
 			// var tab = tabGroup.getActiveTab()
 			// tab.webview.loadURL(url)
+			console.log('NEW URL FORMED: ');
+			console.log(url);
 			toggleSpotlightSearch()
 			clearSearch()
 		}

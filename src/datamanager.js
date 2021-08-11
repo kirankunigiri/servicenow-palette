@@ -62,8 +62,6 @@ function() {
 		fetch(instanceUrl)
 			.then(response => response.json())
 			.then(data => {
-				console.log('DATA READY')
-				console.log(data)
 				var res = data.result.map(item => {
 					item.name = item.name
 					item.display_name = item.label
@@ -84,24 +82,13 @@ function(item) {
 
 
 // DB Fields
-var DB_FIELDS = new SearchDB('Fields', function() {
-	// console.log(`Loading: ${this.name} Data`)
-	var table = tagsData.tags[0].name
-	if (this.cachedTable && this.cachedTable == table) {
-		return
-	}
-	this.cachedTable = table
-	console.log('SWITCHED TO FIELD MODE FOR ' + tagsData.tags[0].name)
-	var fuseDB = this.fuse
-
+function getFieldList(table) {
 	// Table Field API Request
 	const instanceUrl = `https://desktop.service-now.com/api/now/table/sys_dictionary?sysparm_fields=sys_name,element&name=${table}`
 	return new Promise(function (resolve, reject) {
 		fetch(instanceUrl)
 			.then(response => response.json())
 			.then(data => {
-				console.log('DATA READY')
-				console.log(data)
 				var res = data.result.map(item => {
 					item.name = item.element
 					delete item.element
@@ -114,9 +101,61 @@ var DB_FIELDS = new SearchDB('Fields', function() {
 					return item
 				})
 				res = res.filter(item => item.display_name != '' && item.name != '');
-				fuseDB.setCollection(res)
 				resolve(res)
 			})
+	})
+}
+
+function findSuperClass(table) {
+	// Table Field API Request
+	const instanceUrl = `https://desktop.service-now.com/api/now/table/sys_db_object?sysparm_fields=name,super_class&name=${table}`
+	return new Promise(function (resolve, reject) {
+		fetch(instanceUrl)
+			.then(response => response.json())
+			.then(data => {
+				if (data.result[0].super_class == '') {
+					resolve(null)
+				}
+				var superClassUrl = data.result[0].super_class.link + '?sysparm_fields=name'
+				fetch(superClassUrl)
+				.then(response => response.json())
+				.then(data => {
+					resolve(data.result.name)
+				})
+			})
+	})
+}
+
+function updateFieldList(table, fieldList, callback) {
+	getFieldList(table).then(result => {
+		// console.log('got field list for ' + table);
+		fieldList = fieldList.concat(result)
+		findSuperClass(table).then(superclass => {
+			if (!superclass) {
+				callback(fieldList)
+			} else {
+				updateFieldList(superclass, fieldList, callback)
+			}
+		})
+	})
+}
+
+var DB_FIELDS = new SearchDB('Fields', function() {
+	// console.log(`Loading: ${this.name} Data`)
+	var table = tagsData.tags[0].name
+	if (this.cachedTable && this.cachedTable == table) {
+		return
+	}
+	this.cachedTable = table
+	console.log('SWITCHED TO FIELD MODE FOR ' + tagsData.tags[0].name)
+	var fuseDB = this.fuse
+
+	return new Promise(function (resolve, reject) {
+		// Loop through superclasses
+		updateFieldList(table, [], function (fieldList) {
+			fuseDB.setCollection(fieldList)
+			resolve()
+		})
 	})
 })
 
@@ -196,7 +235,7 @@ function getData(state, searchText, firstTag) {
 	var fuseRenderList = []
 	var sections = []
 	
-	console.log('STATE: ' + JSON.stringify(state))
+	// console.log('STATE: ' + JSON.stringify(state))
 	switch (state) {
 		case filterState.TABLE:
 			fuseRenderList = [DB_TABLES, DB_RECENTS]
@@ -213,10 +252,8 @@ function getData(state, searchText, firstTag) {
 			break;
 	}
 
-	console.log(fuseRenderList);
 	var promises = fuseRenderList.map(fuse => fuse.loadData())
 	Promise.all(promises).then((res) => {
-		console.log('ALL PROMISES FINISHED');
 		for (let fuse of fuseRenderList) {
 			sections.push({name: fuse.name, results: fuse.search(searchText).slice(0, MAX_RESULTS_PER_SECTION)})
 		}
@@ -225,8 +262,6 @@ function getData(state, searchText, firstTag) {
 	// 	var res = fuse.loadData()
 	// 	sections.push({name: fuse.name, results: fuse.search(searchText)})
 	// }
-
-	console.log(sections);
 
 	return { sections }
 }
