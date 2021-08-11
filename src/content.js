@@ -1,16 +1,25 @@
-
 var onload2 = function(){};
 
+// const MAX_RESULTS_PER_SECTION = 8
+
 window.onload = () => {
+	
+
 	console.log('window ready');
 	const url = location.href
 	const pattern = /.*\.service-now\.com(\/+.*)*$/
 	const matched = url.match(pattern) != null
 	// console.log('matched servicenow' + matched)
 
+	Array.from(document.querySelectorAll("document")).forEach(e => {
+		const ev = getEventListeners(e)
+		if (Object.keys(ev).length !== 0) console.log(e, ev)
+	})
+
 	if (!matched) {
 		return
 	}
+	
 
 	// TODO: Add list of urls to UI and localstorage
 	
@@ -46,7 +55,14 @@ window.onload = () => {
 	myDiv.innerHTML = `<div class="spotlight--background"></div>
 
 	<!-- Input Search Field -->
-	<input type="text" data-role="taginput" data-tag-trigger="Comma" placeholder="Search" id="spotlight--search" class="spotlight--search" />
+	<div class="spotlight--search">
+		<div id="spotlight--tags">
+			<div v-for="tag in tags" :key="tag" class="spotlight--tag">{{tag.display_name}}</div>
+		</div>
+
+		<input type="text" autocomplete="off" placeholder="Search" id="spotlight--input" class="spotlight--input">
+	</div>
+
 	<div class="spotlight--divider"></div>
 
 	<!-- View Results -->
@@ -58,8 +74,7 @@ window.onload = () => {
 
 			<!-- Vue loop for results in each section -->
 			<div v-for="result in section.results" :key="result">
-				<div class="spotlight--results-item" v-on:click="select($event)">{{ result.item.display_name }} <span
-						class="variable-name">{{result.item.name}}</span> </div>
+				<div class="spotlight--results-item" v-on:click="select($event)" v-on:mouseover="mouseover($event)">{{ result.item.display_name }} <span class="variable-name">{{result.item.name}}</span> </div>
 			</div>
 
 			<div class="spotlight--results-divider"></div>

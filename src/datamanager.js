@@ -1,12 +1,22 @@
 // -------------------------------------------------------------------------
 // Constants
 // -------------------------------------------------------------------------
-const MAX_RESULTS = 8
-const FUSE_THRESHOLD = 0.4
+const MAX_RESULTS_PER_SECTION = 8
+const FUSE_THRESHOLD = 0.3
 const OPTIONS = {
 	includeScore: false,
-	keys: ['name', 'display_name'],
-	threshold: FUSE_THRESHOLD
+	// ignoreLocation: true,
+	// keys: ['name', 'display_name'],
+	keys: [{
+				name: 'name',
+				weight: 0.2
+			},
+			{
+				name: 'display_name',
+				weight: 0.8
+			}
+		],
+		threshold: FUSE_THRESHOLD
 }
 
 // -------------------------------------------------------------------------
@@ -29,7 +39,7 @@ class SearchDB {
 		if (text == '') {
 			return this.fuse._docs.map(function(x) {
 				return {item: x}
-			}) 
+			})
 		}
 		return this.fuse.search(text)
 	}
@@ -38,24 +48,81 @@ class SearchDB {
 
 // DB Tables
 var DB_TABLES = new SearchDB('Tables', 
-// Load Action
+// Load Data
 function() {
-	console.log(`Loading: ${this.name} Data`)
-	this.fuse.setCollection(TABLE_DATA)
+	// console.log(`Loading: ${this.name} Data`)
+	var fuseDB = this.fuse
+	if (fuseDB._docs.length > 0) {
+		return
+	}
+
+	// Table API Request
+	const instanceUrl = 'https://desktop.service-now.com/api/now/table/sys_db_object?sysparm_fields=name,label'
+	return new Promise(function (resolve, reject) {
+		fetch(instanceUrl)
+			.then(response => response.json())
+			.then(data => {
+				console.log('DATA READY')
+				console.log(data)
+				var res = data.result.map(item => {
+					item.name = item.name
+					item.display_name = item.label
+					delete item.label
+					return item
+				})
+				fuseDB.setCollection(res)
+				resolve(res)
+			})
+	})
+
 },
 // Select Action
 function(item) {
-	console.log(`Selected row of type: ${this.name}`)
+	// console.log(`Selected row of type: ${this.name}`)
 })
+
+
 
 // DB Fields
 var DB_FIELDS = new SearchDB('Fields', function() {
-	console.log(`Loading: ${this.name} Data`)
+	// console.log(`Loading: ${this.name} Data`)
+	var table = tagsData.tags[0].name
+	if (this.cachedTable && this.cachedTable == table) {
+		return
+	}
+	this.cachedTable = table
+	console.log('SWITCHED TO FIELD MODE FOR ' + tagsData.tags[0].name)
+	var fuseDB = this.fuse
+
+	// Table Field API Request
+	const instanceUrl = `https://desktop.service-now.com/api/now/table/sys_dictionary?sysparm_fields=sys_name,element&name=${table}`
+	return new Promise(function (resolve, reject) {
+		fetch(instanceUrl)
+			.then(response => response.json())
+			.then(data => {
+				console.log('DATA READY')
+				console.log(data)
+				var res = data.result.map(item => {
+					item.name = item.element
+					delete item.element
+					item.display_name = item.sys_name
+					delete item.sys_name
+					if (item.display_name == '') {
+						item.display_name = item.name.replaceAll('_', ' ')
+						item.display_name = item.display_name.replace(/\b\w/g, function(l){ return l.toUpperCase() })
+					}
+					return item
+				})
+				res = res.filter(item => item.display_name != '' && item.name != '');
+				fuseDB.setCollection(res)
+				resolve(res)
+			})
+	})
 })
 
 // DB Operators
 var DB_OPERATORS = new SearchDB('Operators', function() {
-	console.log(`Loading: ${this.name} Data`)
+	// console.log(`Loading: ${this.name} Data`)
 	this.fuse.setCollection([
 		{display_name: '=', name: 'equals'},
 		{display_name: '<', name: 'less Than'},
@@ -67,7 +134,7 @@ var DB_OPERATORS = new SearchDB('Operators', function() {
 
 // DB Recents
 var DB_RECENTS = new SearchDB('Recents', function() {
-	console.log(`Loading: ${this.name} Data`)
+	// console.log(`Loading: ${this.name} Data`)
 	this.fuse.setCollection([
 		{display_name: 'Catalog Task', name: 'sc_task'},
 		{display_name: 'Mid Script Includes', name: 'script_include_mid'}
@@ -108,6 +175,12 @@ var TABLE_DATA = [
 	{name: 'bg_script', display_name: 'Background Script'},
 	{name: 'sc_task', display_name: 'Catalog Task'},
 	{name: 'script_includes', display_name: 'Script Includes'},
+	{name: 'sc_task', display_name: 'Catalog Task'},
+	{name: 'script_includes', display_name: 'Script Includes'},	{name: 'bg_script', display_name: 'Background Script'},
+	{name: 'sc_task', display_name: 'Catalog Task'},
+	{name: 'script_includes', display_name: 'Script Includes'},
+	{name: 'sc_task', display_name: 'Catalog Task'},
+	{name: 'script_includes', display_name: 'Script Includes'},
 	{name: 'script_include_mid', display_name: 'Mid Script Includes'},
 	{name: 'recents_1', display_name: 'Catalog Task'},
 	{name: 'bg_script', display_name: 'Background Script'}
@@ -119,6 +192,7 @@ var TABLE_DATA = [
 // Data Methods
 // -------------------------------------------------------------------------
 function getData(state, searchText, firstTag) {
+	
 	var fuseRenderList = []
 	var sections = []
 	
@@ -129,7 +203,6 @@ function getData(state, searchText, firstTag) {
 			break;
 		case filterState.FIELD:
 			fuseRenderList = [DB_FIELDS]
-			// ipcRenderer.send('searchFields', getTableTag(), searchText)
 			break;
 		case filterState.OPERATOR:
 			fuseRenderList = [DB_OPERATORS]
@@ -140,10 +213,20 @@ function getData(state, searchText, firstTag) {
 			break;
 	}
 
-	for (let fuse of fuseRenderList) {
-		fuse.loadData()
-		sections.push({name: fuse.name, results: fuse.search(searchText)})
-	}
+	console.log(fuseRenderList);
+	var promises = fuseRenderList.map(fuse => fuse.loadData())
+	Promise.all(promises).then((res) => {
+		console.log('ALL PROMISES FINISHED');
+		for (let fuse of fuseRenderList) {
+			sections.push({name: fuse.name, results: fuse.search(searchText).slice(0, MAX_RESULTS_PER_SECTION)})
+		}
+	})
+	// for (let fuse of fuseRenderList) {
+	// 	var res = fuse.loadData()
+	// 	sections.push({name: fuse.name, results: fuse.search(searchText)})
+	// }
+
+	console.log(sections);
 
 	return { sections }
 }
