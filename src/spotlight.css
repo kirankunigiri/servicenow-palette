@@ -5,6 +5,9 @@
 	position: relative;
 } */
 
+/* Built custom metro min css file using this tool */
+/* https://builder.metroui.org.ua/build.html */
+
 .spotlight {
 	position: fixed;
 	top: 50%;
@@ -61,7 +64,7 @@
 	box-shadow: none !important;
 }
 .input-wrapper {
-	background: transparent;
+	background: transparent !important;
 	border: none;
 	color: white;
 	display: inline-block !important;

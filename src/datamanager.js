@@ -125,7 +125,7 @@ function getData(state, searchText, firstTag) {
 	console.log('STATE: ' + JSON.stringify(state))
 	switch (state) {
 		case filterState.TABLE:
-			fuseRenderList = [DB_TABLES, DB_RECENTS, DB_OPERATORS]
+			fuseRenderList = [DB_TABLES, DB_RECENTS]
 			break;
 		case filterState.FIELD:
 			fuseRenderList = [DB_FIELDS]

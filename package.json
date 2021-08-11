@@ -24,6 +24,7 @@
   "devDependencies": {
     "copy-webpack-plugin": "^9.0.1",
     "glob": "^7.1.7",
+    "uglifyjs-folder": "^3.0.0",
     "uglifyjs-webpack-plugin": "^2.2.0",
     "webpack": "^5.50.0",
     "webpack-cli": "^4.7.2"

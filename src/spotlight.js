@@ -14,6 +14,7 @@ var filterState = {
 	TEXT: "Enter your search query",
 }
 var resultsData = getData(filterState.current, '')
+console.log(resultsData);
 
 function toggleSpotlightSearch() {
 	$('#spotlight').toggle()
@@ -102,6 +103,10 @@ function updateFilterState() {
 function updateResults() {
 	updateFilterState()
 	resultsData.sections = getData(filterState.current, getSearchText(), getTableTag()).sections
+    console.log("🚀 | getTableTag()", getTableTag())
+    console.log("🚀 | getSearchText()", getSearchText())
+    console.log("🚀 | filterState.current", filterState.current)
+	console.log(resultsData.sections);
 }
 
 function addTag() {
@@ -148,9 +153,35 @@ function updateSelectedRow() {
 // -------------------------------------------------------------------------
 // Document Ready
 // -------------------------------------------------------------------------
-$(document).ready(function () {
+onload2 = function () {
+	console.log('Page Starting');
 
-	var input = $('#spotlight--search').first().data('taginput');
+	var checkExist = setInterval(function() {
+		if (document.querySelector('.input-wrapper') != null) {
+		   console.log("Exists!");
+		   document.querySelector('.input-wrapper').addEventListener('input', (event) => {
+			   console.log(event);
+			   resetArrowSelection()
+			   updateResults()
+		   })
+		   clearInterval(checkExist);
+		}
+	 }, 100)
+
+	// Vue - table of results and click events
+	var resultsApp = new Vue({
+		el: '#spotlight--results',
+		data: resultsData,
+		methods: {
+			select: function (event) {
+				elem = $(event.currentTarget)
+				selectionIndex = elem.index('.spotlight--results-item')
+				// targetId = event.currentTarget.textContent
+				addTag()
+			}
+		}
+	})
+
 
 	// Get the input data and filter (currently doing it manually)
 	$('.input-wrapper').on('input', function () {
@@ -261,22 +292,7 @@ $(document).ready(function () {
 		}
 	});
 
-});
-
-
-// Vue - table of results and click events
-var resultsApp = new Vue({
-	el: '#spotlight--results',
-	data: resultsData,
-	methods: {
-		select: function (event) {
-			elem = $(event.currentTarget)
-			selectionIndex = elem.index('.spotlight--results-item')
-			// targetId = event.currentTarget.textContent
-			addTag()
-		}
-	}
-})
+};
 
 
 
