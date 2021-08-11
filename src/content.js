@@ -34,14 +34,12 @@ window.onload = () => {
 	// requestSender.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
 	// requestSender.setRequestHeader("X-Requested-With", "XMLHttpRequest")
 	// requestSender.setRequestHeader("Authorization", "Basic " + btoa('kiran.kunigiri' + ":" + 'Strtngp4fn!!1'))
-	requestSender.send()
-	// console.log(requestSender)
+	// requestSender.send()
 
 	var myDiv = document.createElement("div");
 	myDiv.className = 'spotlight'
 	myDiv.id = 'spotlight';
-	myDiv.innerHTML = `
-	<div class="spotlight--background"></div>
+	myDiv.innerHTML = `<div class="spotlight--background"></div>
 
 	<!-- Input Search Field -->
 	<input type="text" data-role="taginput" data-tag-trigger="Comma" placeholder="Search" id="spotlight--search" class="spotlight--search" />

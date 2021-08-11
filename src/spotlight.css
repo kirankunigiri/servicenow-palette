@@ -1,16 +1,9 @@
-/* *,
-*::after,
-*::before {
-	margin: 0px;
-	padding: 0px;
-	box-sizing: inherit;
+/* For dev only - replicate servicenow css */
+/* html {
+	box-sizing: border-box;
+	font: 62.5%/normal GilroyRegular;
+	position: relative;
 } */
-
-html {
-	/* 1 rem = 10px, 10px/16px = 62.5% */
-	/* font-size: 62.5%; */
-}
-
 
 .spotlight {
 	position: fixed;
@@ -19,7 +12,6 @@ html {
 	transform: translate(-50%, -50%);
 	background-color: rgba(57, 56, 58, 0.99); /* #464547 */
 	color: white;
-	/* overflow: hidden; */
 	/* display: none; */
 	box-shadow: rgba(19, 25, 31, 0.85) 0px 20px 30px -10px;
 
@@ -28,6 +20,10 @@ html {
 	border-radius: 8px;
 	font-size: 2.6rem;
 	font-family: 'Open Sans', sans-serif;
+
+	/* Scroll properties */
+	display: flex;
+	flex-direction: column;
 }
 
 /* Optional blur background - currently blocks input interactivity */
@@ -98,6 +94,26 @@ html {
 
 .spotlight--results {
 	margin-left: 2rem;
+
+	/* Scroll properties */
+	flex: 1;
+	overflow-y: auto;
+}
+.spotlight--results::-webkit-scrollbar {
+	width: 8px;
+	height: 13px;
+}
+/* Track */
+/* .spotlight--results::-webkit-scrollbar-track {
+	background: rgb(34, 34, 34);
+} */
+/* Handle */
+.spotlight--results::-webkit-scrollbar-thumb {
+	background: rgb(116, 116, 116);
+}
+/* Handle on hover */
+.spotlight--results::-webkit-scrollbar-thumb:hover {
+	background: rgb(44, 44, 44);
 }
 
 .spotlight--results-title {
@@ -121,9 +137,9 @@ html {
 .spotlight--results-item_selected {
 	background-color: #3D7EE6;
 }
-.spotlight--results-item:hover {
+/* .spotlight--results-item:hover {
 	background-color: #3D7EE6;
-}
+} */
 
 .variable-name {
 	float:right;
