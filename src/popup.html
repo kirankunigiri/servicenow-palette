@@ -1,0 +1,38 @@
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="popup.css">
+	<title>ServiceNow Palette</title>
+</head>
+<body>
+	<div class="popup--title">ServiceNow Palette</div>
+	<div class="popup--description">
+		<ul class="feature-list">
+			<li>Palette search</li>
+			<li>Keyboard shortcuts</li>
+			<li>Tab management</li>
+		</ul> 
+		<b>Instructions:</b> Activate for an instance using the checkbox while on a ServiceNow tab. <br>
+		<b>Login:</b> You will then be prompted to enter your ServiceNow login credentials to enable palette search.
+	</div>
+
+	<div id="currentInstance">
+		<input @change="check($event)" v-if="name != ''" type="checkbox" id="currentInstanceInput" name="currentInstanceInput" value="currentInstanceInput">
+		<label v-if="name != ''" id="currentInstanceLabel" for="currentInstanceInput">Active: {{name}}</label>
+	</div>
+
+	<div id="now-instances">
+		<div class="now-instances--title">My Instances</div>
+		<div v-for="instance in instances" :key="instance" class="instance-row">
+			<span class="instance-delete" v-on:click="doDelete(index)">✖ </span>
+			{{instance}}
+		</div>
+	</div>
+
+</body>
+
+<script src="lib/vue.csp.dev.js"></script>
+<script src="popup.js"></script>
+</html>

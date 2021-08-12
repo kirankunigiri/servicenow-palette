@@ -1,24 +1,30 @@
 var onload2 = function(){};
 
+console.log('adding listener');
+
 // const MAX_RESULTS_PER_SECTION = 8
 
 window.onload = () => {
+
+	// chrome.runtime.onMessage.addListener(
+	// 	function(request, sender, sendResponse) {
+	// 	  if (request.cmd === "activateInstance") {
+	// 		  console.log('activate instance');
+	// 		  sendResponse({farewell: "goodbye"});
+	// 	  }
+	// 	}
+	// )
+
+	// fetch('https://desktop.service-now.com/api/now/table/sc_task')
+
+	// console.log('window ready');
+	// const url = location.href
+	// const pattern = /.*\.service-now\.com(\/+.*)*$/
+	// const matched = url.match(pattern) != null
 	
-
-	console.log('window ready');
-	const url = location.href
-	const pattern = /.*\.service-now\.com(\/+.*)*$/
-	const matched = url.match(pattern) != null
-	// console.log('matched servicenow' + matched)
-
-	Array.from(document.querySelectorAll("document")).forEach(e => {
-		const ev = getEventListeners(e)
-		if (Object.keys(ev).length !== 0) console.log(e, ev)
-	})
-
-	if (!matched) {
-		return
-	}
+	// if (!matched) {
+	// 	return
+	// }
 	
 
 	// TODO: Add list of urls to UI and localstorage
@@ -36,18 +42,18 @@ window.onload = () => {
 	// }
 
 
-
 	// const instanceUrl = 'https://desktop.service-now.com/api/now/table/sc_task'
 	// const instanceUrl = 'https://surf.service-now.com/api/now/table/sys_db_object?sysparm_fields=sys_name,super_class&name=sc_task'
 	// requestSender.open('GET', instanceUrl, true)
-	// requestSender.send()
 
 
 	// requestSender.withCredentials = true
-	// requestSender.setRequestHeader('Access-Control-Allow-Origin', '*')
 	// requestSender.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
 	// requestSender.setRequestHeader("X-Requested-With", "XMLHttpRequest")
 	// requestSender.setRequestHeader("Authorization", "Basic " + btoa('kiran.kunigiri' + ":" + 'Strtngp4fn!!1'))
+
+	// requestSender.send()
+
 
 	var myDiv = document.createElement("div");
 	myDiv.className = 'spotlight'

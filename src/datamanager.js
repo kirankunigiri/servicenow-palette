@@ -57,7 +57,7 @@ function() {
 	}
 
 	// Table API Request
-	const instanceUrl = 'https://desktop.service-now.com/api/now/table/sys_db_object?sysparm_fields=name,label'
+	const instanceUrl = `https://${window.location.host}/api/now/table/sys_db_object?sysparm_fields=name,label`
 	return new Promise(function (resolve, reject) {
 		fetch(instanceUrl)
 			.then(response => response.json())
@@ -71,6 +71,9 @@ function() {
 				fuseDB.setCollection(res)
 				resolve(res)
 			})
+			.catch((error) => {
+				console.error('Error:', error);
+			  });
 	})
 
 },
@@ -84,7 +87,7 @@ function(item) {
 // DB Fields
 function getFieldList(table) {
 	// Table Field API Request
-	const instanceUrl = `https://desktop.service-now.com/api/now/table/sys_dictionary?sysparm_fields=sys_name,element&name=${table}`
+	const instanceUrl = `https://${window.location.host}/api/now/table/sys_dictionary?sysparm_fields=sys_name,element&name=${table}`
 	return new Promise(function (resolve, reject) {
 		fetch(instanceUrl)
 			.then(response => response.json())
@@ -108,7 +111,7 @@ function getFieldList(table) {
 
 function findSuperClass(table) {
 	// Table Field API Request
-	const instanceUrl = `https://desktop.service-now.com/api/now/table/sys_db_object?sysparm_fields=name,super_class&name=${table}`
+	const instanceUrl = `https://${window.location.host}/api/now/table/sys_db_object?sysparm_fields=name,super_class&name=${table}`
 	return new Promise(function (resolve, reject) {
 		fetch(instanceUrl)
 			.then(response => response.json())
@@ -180,7 +183,25 @@ var DB_RECENTS = new SearchDB('Recents', function() {
 	])
 })
 
-var FUSE_MODULES = new Fuse([], OPTIONS)
+// DB Modules
+var DB_MODULES = new SearchDB('Modules', function() {
+	// console.log(`Loading: ${this.name} Data`)
+
+	setTimeout(function(){
+		var moduleElems = document.getElementsByClassName('sn-widget-list-item sn-widget-list-item_hidden-action module-node')
+	}, 500)
+
+	var moduleElems = document.getElementsByClassName('sn-widget-list-item sn-widget-list-item_hidden-action module-node')
+	var moduleList = []
+	for (var module of moduleElems) {
+		var moduleLink = module.href
+		var moduleName = module.text
+		moduleList.push({display_name: moduleName, name: moduleLink})
+	}
+
+	this.fuse.setCollection(moduleList)
+})
+
 // Get list of all module names
 // document.getElementsByClassName('sn-widget-list-item sn-widget-list-item_hidden-action module-node')[21].href
 
@@ -238,7 +259,7 @@ function getData(state, searchText, firstTag) {
 	// console.log('STATE: ' + JSON.stringify(state))
 	switch (state) {
 		case filterState.TABLE:
-			fuseRenderList = [DB_TABLES, DB_RECENTS]
+			fuseRenderList = [DB_TABLES, DB_MODULES]
 			break;
 		case filterState.FIELD:
 			fuseRenderList = [DB_FIELDS]

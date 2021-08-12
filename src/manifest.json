@@ -9,14 +9,6 @@
 		],
 		"persistent": true
 	},
-	"content_scripts": [
-		{
-			"matches": ["http://*/*", "https://*/*"],
-			"js": ["lib.min.js", "content.js", "datamanager.js", "spotlight.js"],
-			"css": ["spotlight.css"],
-			"run_at": "document_end"
-		}
-	],
 	"permissions": [
 		"storage",
 		"tabs",
@@ -24,8 +16,7 @@
         "webNavigation",
         "management",
 		"https://*/",
-		"http://*/",
-		"https://www.surf.service-now.com/*"
+		"http://*/"
 	],
 	"icons": {
 		"16": "servicenow.png",
@@ -33,7 +24,7 @@
 		"128": "servicenow.png"
 	},
 	"browser_action": {
-		"default_title": "YouTube Dark Toggle",
-		"default_popup": "index.html"
+		"default_title": "ServiceNow Palette",
+		"default_popup": "popup.html"
 	  }
 }

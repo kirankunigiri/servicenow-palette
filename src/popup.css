@@ -1,0 +1,45 @@
+html {
+	font-size: 62.5%;
+}
+body {
+	width: 36rem;
+	font-size: 1.4rem;
+	margin: 1.5rem 1.8rem;
+	margin-top: 1rem;
+	background-color: rgb(54, 78, 80);
+	color: rgba(255, 255, 255, 0.85);
+}
+
+.popup--title {
+	font-size: 1.8rem;
+	font-weight: bold;
+}
+.feature-list {
+	padding-left: 2rem;
+}
+.popup--description {
+	margin-top: .3rem;
+	font-size: 1.4rem;
+}
+
+#currentInstance {
+	margin-top: .8rem;
+	font-size: 1.6rem;
+}
+
+#currentInstanceLabel {
+	margin-top: .4rem;
+}
+
+#now-instances {
+	margin-top: .7rem;
+}
+.now-instances--title {
+	font-weight: bold;
+	font-size: 1.5rem;
+}
+
+.instance-delete {
+	color: red;
+	cursor: pointer;
+}

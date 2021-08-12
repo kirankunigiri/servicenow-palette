@@ -152,31 +152,66 @@ function updateSelectedRow() {
 // -------------------------------------------------------------------------
 // Keyboard Shortcuts
 // -------------------------------------------------------------------------
-var shortcutsDisabled = false
-var listenerDivs = []
-function windowKeyDown(e) {
-	if (shortcutsDisabled) {
-		return
-	}
-	// console.log(e);
-	// e.preventDefault()
+var shortcutsDisabled = false			// used for a short cooldown to prevent multiple events firing
+var listenerDivs = []					// Stores listeners for deletion
+var activeKeys = new Set()				// Keeps track of actively pressed keys for shortcuts
+var saveMapping = new Set([17, 83])
+var searchMapping = new Set([17, 73])
+var deleteMapping = new Set([17, 8])
+
+// Checks if 2 sets are equal
+const setEquality = (a, b) => a.size === b.size && [...a].every(value => b.has(value))
+
+function windowKeyUp(e) {			// On key up
+	activeKeys.delete(e.keyCode)
+}
+function windowKeyDown(e) {			// On key down
+	activeKeys.add(e.keyCode)
+	if (shortcutsDisabled) { return }
 
 	// Modifier
 	var modifierActive = e.ctrlKey || e.metaKey
+	console.log(activeKeys)
 
 	// Control I
-	if (modifierActive && e.key.toLowerCase() == 'i') {
-		console.log('SHORTCUT ACTIVATE');
+	if (setEquality(activeKeys, searchMapping)) {
+		e.preventDefault()
 		toggleSpotlightSearch()
 		getSpotlightInput().focus()
 
 		shortcutsDisabled = true
 		setTimeout(function(){
 			shortcutsDisabled = false
-		  },5);
+		},5);
+	}
+
+	// Save Shortcut
+	mapButton(e, saveMapping, '#sysverb_update')
+
+	// Delete Shortcut
+	mapButton(e, deleteMapping, '#sysverb_delete')
+}
+
+// Maps a button to a div selector
+function mapButton(e, mapping, selector) {
+	if (setEquality(activeKeys, mapping)) {
+		e.preventDefault()
+		const button = findButtonDeep(selector)
+		if (button) { button.click() }
 	}
 }
 
+// Finds a button nested within iframes
+function findButtonDeep(selector) {
+	var button = document.querySelector(selector)
+	if (!button) {
+		for (var iframe of document.querySelectorAll('iframe')) {
+			button = iframe.contentWindow.document.querySelector(selector)
+			if (button) { return button }
+		}
+	}
+	return button
+}
 
 // -------------------------------------------------------------------------
 // Document Ready
@@ -185,34 +220,40 @@ onload2 = function() {
 
 	// Add a ton of listeners to document, html, and iframes
 	document.addEventListener("keydown", windowKeyDown)
+	document.addEventListener("keyup", windowKeyUp)
 
 	var iframes = document.querySelectorAll('iframe')
 	for (var iframe of iframes) {
 		listenerDivs.push(document)
 		iframe.contentWindow.document.addEventListener("keydown", windowKeyDown)
+		iframe.contentWindow.document.addEventListener("keyup", windowKeyUp)
 	}
 
 	var htmlDivs = document.querySelectorAll('html')
 	for (var htmlDiv of htmlDivs) {
 		listenerDivs.push(htmlDiv)
 		htmlDiv.addEventListener("keydown", windowKeyDown)
+		htmlDiv.addEventListener("keyup", windowKeyUp)
 	}
 
 	// Reset and re-add listeners when the DOM changes
 	var observer = new MutationObserver(function(mutations) {
 		for (listenerDiv of listenerDivs) {
 			listenerDiv.removeEventListener("keydown", windowKeyDown)
+			listenerDiv.removeEventListener("keyup", windowKeyUp)
 		}
 
 		var htmlDivs = document.querySelectorAll('html')
 		for (var htmlDiv of htmlDivs) {
 			listenerDivs.push(htmlDiv)
 			htmlDiv.addEventListener("keydown", windowKeyDown)
+			htmlDiv.addEventListener("keyup", windowKeyUp)
 		}
 		var iframes = document.querySelectorAll('iframe')
 		for (var iframe of iframes) {
 			listenerDivs.push(iframe.contentWindow.document)
 			iframe.contentWindow.document.addEventListener("keydown", windowKeyDown)
+			iframe.contentWindow.document.addEventListener("keyup", windowKeyUp)
 		}
 	 });
 	 observer.observe(document, {attributes: false, childList: true, characterData: false, subtree:true});
@@ -305,7 +346,7 @@ onload2 = function() {
 				console.log((numTags-1) % 3)
 				if ((numTags-1) % 3 == 0) {
 					url = getFilterURL()
-				} else if ((numTags-1) % 3 == 2) {
+				} else if ((numTags-1) % 3 == 2 && getSearchText() != '') {
 					addTag()
 					url = getFilterURL()
 				} else {
@@ -315,16 +356,31 @@ onload2 = function() {
 				// GENERAL TEXT SEARCH
 				// Someone has entered in text. Check if there is a tag, and only proceed if there is 1 tag
 				var tableName = getTableTag().name
-				url = `https://desktop.service-now.com/${tableName}_list.do?sysparm_query=GOTO123TEXTQUERY321=${getSearchText()}`;
+				url = `https://${window.location.host}/${tableName}_list.do?sysparm_query=GOTO123TEXTQUERY321=${getSearchText()}`;
 			} else {
 				// LIST TABLE
 				// Get whatever is currently selected
-				url = `https://desktop.service-now.com/nav_to.do?uri=%2F${getActiveSelection().name}_list.do`
+				var table
+				var selection = getActiveSelection()
+				if (getActiveSelection()) {
+					table = getActiveSelection().name
+				} else if (getTableTag()) {
+					table = getTableTag().name
+				}
+
+				url = `https://${window.location.host}/nav_to.do?uri=%2F${table}_list.do`
+
+				// Change URL if it's a module
+				if (getActiveSelection().section == DB_MODULES.name) {
+					url = selection.name
+				}
+
 			}
 			// var tab = tabGroup.getActiveTab()
 			// tab.webview.loadURL(url)
 			console.log('NEW URL FORMED: ');
 			console.log(url);
+			window.location.href = url
 			toggleSpotlightSearch()
 			clearSearch()
 		}
@@ -435,5 +491,5 @@ function getFilterBlockSearch(tableName, filters) {
 
 	searchString = searchString.slice(1, searchString.length)
 
-    return `https://desktop.service-now.com/${tableName}_list.do?sysparm_query=${searchString}`;
+    return `https://${window.location.host}/${tableName}_list.do?sysparm_query=${searchString}`;
 }
