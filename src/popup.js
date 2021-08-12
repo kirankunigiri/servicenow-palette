@@ -2,10 +2,23 @@
 // https://github.com/vuejs/vue/tree/csp/dist
 // chrome.storage.local.set({ instanceList: [] })
 
+chrome.runtime.connect({ name: "popup" });
+
 var instanceData = {
-	instances: ['Surf', 'Desktop']
+	instances: [],
+	tabs: []
 }
+var keymapData = {
+	keymaps: [
+		{ name: 'Palette Search', xpath: "palette_search", mapping: ["ControlLeft", "KeyI"]},
+		{ name: 'Save', xpath: "//*[@id='sysverb_update']", mapping: ["ControlLeft", "KeyS"]},
+		{ name: 'Delete', xpath: "//*[@id='sysverb_delete']", mapping: ["ControlLeft", "Backspace"]}
+	]
+}
+var showHints = true
+// chrome.storage.local.set({ keymapList: keymapData.keymaps })
 var currentInstance = { name: '' }
+var activeKeys = new Set()
 
 function reloadTab() {
 	chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
@@ -20,6 +33,33 @@ function activateInstance() {
 	chrome.storage.local.set({ instanceList: instanceData.instances })
 	reloadTab()
 }
+
+// Load keyboard shortcuts
+chrome.storage.local.get(['keymapList'], (result) => {
+	if (!result.keymapList) {
+		// First time default keyboard shortcuts
+		chrome.storage.local.set({ keymapList: [
+			{ name: 'Palette Search', xpath: "palette_search", mapping: ["ControlLeft", "KeyI"]},
+			{ name: 'Save', xpath: "//*[@id='sysverb_update']", mapping: ["ControlLeft", "KeyS"]},
+			{ name: 'Delete', xpath: "//*[@id='sysverb_delete']", mapping: ["ControlLeft", "Backspace"]}
+		] })
+	} else {
+		keymapData.keymaps = result.keymapList
+	}
+})
+
+function updateHints(checked) {
+	console.log('updating to ' + checked);
+	if (checked) {
+		[...document.styleSheets[0].cssRules].find(x=> x.selectorText=='.hint').style.display='block'
+		chrome.storage.local.set({ showHints: true })
+	} else {
+		console.log('showhint is now false');
+		[...document.styleSheets[0].cssRules].find(x=> x.selectorText=='.hint').style.display='none'
+		chrome.storage.local.set({ showHints: false })
+	}
+}
+
 
 window.onload = () => {
 	console.log('window ready');
@@ -43,6 +83,20 @@ window.onload = () => {
 		})
 	})
 
+	chrome.storage.local.get(['showHints'], (result) => {
+		console.log('original:' + result.showHints)
+		// First time showHints
+		if (typeof result.showHints === 'undefined') {
+			chrome.storage.local.set({ showHints: true})
+			showHints = true
+		} else {
+			showHints = result.showHints
+		}
+		console.log('starting: ' + showHints);
+		document.getElementById('showHintsInput').checked = showHints
+		updateHints(showHints)
+	})
+
 	var curentInstanceApp = new Vue({
 		el: '#currentInstance',
 		data: currentInstance,
@@ -59,6 +113,10 @@ window.onload = () => {
 					chrome.storage.local.set({ instanceList: list })
 					reloadTab()
 				}
+			},
+			hintChanged(e) {
+				console.log('vue says changed')
+				updateHints(e.target.checked)
 			}
 		}
 	})
@@ -76,19 +134,74 @@ window.onload = () => {
 					reloadTab()
 				}
 			},
+			filterTabsByInstance(instance) {
+				// return instanceData.tabs
+				return instanceData.tabs.filter(function(tab) {
+					var url = new URL(tab.url)
+					return url.host === instance
+				})
+			},
+			clickTab(e) {
+				var key = parseInt(e.target.getAttribute('key'))
+				chrome.tabs.update(key, {selected: true});
+			},
+			clickInstance(e) {
+				if (e.target.className != 'instance-row') {return}
+				var key = e.target.getAttribute('key')
+				chrome.tabs.create({url: `https://${key}`})
+			}
+		}
+	})
+
+	setTimeout(function(){ 
+		// Add deletion for keymaps (broken with vue)
+		var elements = document.getElementsByClassName('keymap-delete')
+		for (elem of elements) {
+			elem.addEventListener('click', function(e) {
+				var key = e.target.parentElement.getAttribute('key')
+				var index = keymapData.keymaps.map(item => item.xpath).indexOf(key)
+				console.log(index);
+				keymapData.keymaps.splice(index, 1)
+				keymapData.keymaps = [...keymapData.keymaps]
+				chrome.storage.local.set({ keymapList: keymapData.keymaps })
+			})
+		}
+	}
+	, 500);
+
+	chrome.tabs.query({currentWindow: true}, function (tabs) {
+		instanceData.tabs = tabs
+		for (tab of tabs) {
+			var url = new URL(tab.url)
 		}
 	})
 
 }
 
-// Code to highlight buttons on page
-function highlightButtons() {
-	var buttons = document.querySelectorAll('button')
-	var txtButtons = []
-	for (button of buttons) {
-		if (button.textContent != '') {
-			button.style.border = '10px red solid'
-			txtButtons.push(button)
+
+// Vue - list of instances
+var keymapsApp = new Vue({
+	el: '#shortcuts',
+	data: keymapData,
+	methods: {
+		keyup: function(e) {
+			activeKeys.delete(e.code)
+		},
+		keydown: function(e) {
+			e.preventDefault()
+			activeKeys.add(e.code)
+			console.log(activeKeys);
+			var key = e.target.getAttribute('key')
+			var index = keymapData.keymaps.map(item => item.xpath).indexOf(key);
+
+			keymapData.keymaps[index].mapping = Array.from(activeKeys)
+			keymapData.keymaps = [...keymapData.keymaps]
+			chrome.storage.local.set({ keymapList: keymapData.keymaps })
+		},
+		addShortcut: function() {
+			chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+				chrome.tabs.sendMessage(tabs[0].id, {cmd: "addShortcut"});
+			});
 		}
 	}
-}
+})

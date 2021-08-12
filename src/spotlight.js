@@ -155,23 +155,33 @@ function updateSelectedRow() {
 var shortcutsDisabled = false			// used for a short cooldown to prevent multiple events firing
 var listenerDivs = []					// Stores listeners for deletion
 var activeKeys = new Set()				// Keeps track of actively pressed keys for shortcuts
-var saveMapping = new Set([17, 83])
-var searchMapping = new Set([17, 73])
-var deleteMapping = new Set([17, 8])
+var searchMapping = null				// https://stackoverflow.com/questions/5203407/how-to-detect-if-multiple-keys-are-pressed-at-once-using-javascript
+
+var keymapList = [
+	{ name: '', xpath: '', mapping: ''}
+]
+chrome.storage.local.get(['keymapList'], (result) => {
+	keymapList = result.keymapList
+	for (keymap of keymapList) {
+		if (!keymap.mapping) { keymap.mapping = [] }
+	}
+	searchMapping = keymapList.filter(keymap => keymap.name == 'Palette Search')[0].mapping
+	searchMapping = new Set(searchMapping)
+})
 
 // Checks if 2 sets are equal
 const setEquality = (a, b) => a.size === b.size && [...a].every(value => b.has(value))
 
 function windowKeyUp(e) {			// On key up
-	activeKeys.delete(e.keyCode)
+	activeKeys.delete(e.code)
 }
 function windowKeyDown(e) {			// On key down
-	activeKeys.add(e.keyCode)
+	activeKeys.add(e.code)
 	if (shortcutsDisabled) { return }
 
-	// Modifier
-	var modifierActive = e.ctrlKey || e.metaKey
-	console.log(activeKeys)
+	// Logs
+	// console.log(e);
+	// console.log(activeKeys)
 
 	// Control I
 	if (setEquality(activeKeys, searchMapping)) {
@@ -185,23 +195,29 @@ function windowKeyDown(e) {			// On key down
 		},5);
 	}
 
-	// Save Shortcut
-	mapButton(e, saveMapping, '#sysverb_update')
+	// Custom keymaps
+	for (keymap of keymapList) {
+		if ( keymap.name != 'Palette Search') {
+			mapButton(e, new Set(keymap.mapping), keymap.xpath)
+		}
+	}
 
-	// Delete Shortcut
-	mapButton(e, deleteMapping, '#sysverb_delete')
+	// if (setEquality(activeKeys, new Set(["ControlLeft", "KeyB"]))) {
+	// 	e.preventDefault()
+	// 	highlightButtons()
+	// }
 }
 
 // Maps a button to a div selector
 function mapButton(e, mapping, selector) {
 	if (setEquality(activeKeys, mapping)) {
 		e.preventDefault()
-		const button = findButtonDeep(selector)
+		const button = findButtonDeepXpath(selector)
 		if (button) { button.click() }
 	}
 }
 
-// Finds a button nested within iframes
+// Finds a button nested within iframes (NOT BEING USED, REPLACED WITH XPATH FUNCTION)
 function findButtonDeep(selector) {
 	var button = document.querySelector(selector)
 	if (!button) {
@@ -212,6 +228,72 @@ function findButtonDeep(selector) {
 	}
 	return button
 }
+
+function findButtonDeepXpath(xpath) {
+	var button = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+	if (!button) {
+		for (var iframe of document.querySelectorAll('iframe')) {
+			const temp = iframe.contentWindow.document
+			button = temp.evaluate(xpath, temp, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+			if (button) { return button }
+		}
+	}
+	return button
+}
+
+// Code to highlight buttons on page
+function highlightButtons() {
+
+	function foundButton() {
+		// button.style.border = '10px red solid'
+		button.style.backgroundColor = 'red'
+		button.disabled = false
+
+		var new_element = button.cloneNode(true);
+		button.parentNode.replaceChild(new_element, button);
+		new_element.onclick = function() { return false }
+
+		new_element.addEventListener("click", function (e) {
+			e.preventDefault()
+			e.stopPropagation();
+            e.stopImmediatePropagation();
+			console.log(this.textContent);
+			console.log(xpath(this));
+			// Add new keyboard shortcut
+			keymapList.push({ name: this.textContent, xpath: xpath(this), mapping: ''})
+			chrome.storage.local.set({ keymapList: keymapList })
+			location.reload()
+		});
+	}
+
+	var buttons = document.querySelectorAll('button')
+	for (button of buttons) {
+		if (button.textContent != '') {
+			foundButton(button)
+		}
+	}
+	for (var iframe of document.querySelectorAll('iframe')) {
+		var buttons = iframe.contentWindow.document.querySelectorAll('button')
+		for (button of buttons) {
+			if (button.textContent != '') {
+				foundButton(button)
+			}
+		}
+	}
+}
+
+function xpath(el) {
+	if (typeof el == "string") return document.evaluate(el, document, null, 0, null)
+	if (!el || el.nodeType != 1) return ''
+	if (el.id) return "//*[@id='" + el.id + "']"
+	var sames = [].filter.call(el.parentNode.children, function (x) { return x.tagName == el.tagName })
+	return xpath(el.parentNode) + '/' + el.tagName.toLowerCase() + (sames.length > 1 ? '['+([].indexOf.call(sames, el)+1)+']' : '')
+}
+// highlightButtons()
+//*[@id='user_info_dropdown']
+// document.evaluate("//*[@id='sc_task_filter_toggle_nlq_image']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.innerHTML;
+
+
 
 // -------------------------------------------------------------------------
 // Document Ready
@@ -360,20 +442,22 @@ onload2 = function() {
 			} else {
 				// LIST TABLE
 				// Get whatever is currently selected
+				console.log('list table mode');
 				var table
 				var selection = getActiveSelection()
-				if (getActiveSelection()) {
+				if (tagsData.tags.length == 0 && getActiveSelection()) {
 					table = getActiveSelection().name
 				} else if (getTableTag()) {
+					console.log('getting table tag of ' + getTableTag().name);
 					table = getTableTag().name
 				}
 
 				url = `https://${window.location.host}/nav_to.do?uri=%2F${table}_list.do`
 
-				// Change URL if it's a module
-				if (getActiveSelection().section == DB_MODULES.name) {
-					url = selection.name
-				}
+				// Change URL if it's a module TODO: Re Enable when modules are back
+				// if (getActiveSelection().section == DB_MODULES.name) {
+				// 	url = selection.name
+				// }
 
 			}
 			// var tab = tabGroup.getActiveTab()

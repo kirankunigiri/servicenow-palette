@@ -2,7 +2,7 @@ html {
 	font-size: 62.5%;
 }
 body {
-	width: 36rem;
+	width: 40rem;
 	font-size: 1.4rem;
 	margin: 1.5rem 1.8rem;
 	margin-top: 1rem;
@@ -10,9 +10,21 @@ body {
 	color: rgba(255, 255, 255, 0.85);
 }
 
+
+.header {
+	/* display: flex; */
+	/* align-items: center; */
+}
+.logo {
+	max-width: 2.1rem;
+	display: inline-block;
+    margin-bottom: -.3rem;
+}
 .popup--title {
 	font-size: 1.8rem;
 	font-weight: bold;
+	margin-left: .5rem;
+	display: inline;
 }
 .feature-list {
 	padding-left: 2rem;
@@ -22,8 +34,20 @@ body {
 	font-size: 1.4rem;
 }
 
+#showHints {
+	position: absolute;
+	top: .9rem;
+	right: 2.2rem;
+}
+#showHintsInput {
+	/* width: 1.2rem; */
+}
+#showHintsText {
+	font-size: 1.4rem;
+	margin-bottom: .2rem;
+}
 #currentInstance {
-	margin-top: .8rem;
+	margin-top: 1rem;
 	font-size: 1.6rem;
 }
 
@@ -39,7 +63,54 @@ body {
 	font-size: 1.5rem;
 }
 
-.instance-delete {
+#shortcuts {
+	margin-top: 1.5rem;
+}
+.shortcuts--title {
+	font-weight: bold;
+	font-size: 1.5rem;
+}
+.shortcut-row {
+	margin-top: .5rem;
+	display: flex;
+}
+.keymap-input {
+	margin-left: 1rem;
+	flex-grow: 2;
+}
+
+.instance-row {
+	margin-top: 1rem;
+	font-weight: bold;
+	font-size: 1.5rem;
+	cursor: pointer;
+}
+.tab-row {
+	font-weight: normal;
+	font-size: 1.4rem;
+	margin-left: 2.5rem;
+	background-color: rgb(92, 115, 117);
+	margin-top: .8rem;
+	padding: .2rem .8rem;
+	cursor: pointer;
+}
+
+.delete {
 	color: red;
 	cursor: pointer;
+}
+
+#addShortcutBtn {
+	margin-top: 1rem;
+}
+.addShortcutsDescription {
+	margin-top: .5rem;
+}
+
+.hint {
+	display: block;
+}
+
+.disclaimerDescription {
+	margin-top: .8rem;
 }

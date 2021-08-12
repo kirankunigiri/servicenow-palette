@@ -2,6 +2,23 @@ chrome.runtime.onInstalled.addListener(() => {
 	console.log('Installed ServiceNow Palette');
 })
 var instanceList = null
+chrome.runtime.onConnect.addListener(function(port) {
+    if (port.name === "popup") {
+        port.onDisconnect.addListener(function() {
+			chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
+
+				chrome.storage.local.get(['instanceList'], (result) => {
+					var url = new URL(tabs[0].url)
+					if (result.instanceList && result.instanceList.includes(url.host)) {
+						// Code to reload tab every time window closes
+						// Deemed too annoying to use
+						// chrome.tabs.reload(tabs[0].id)
+					}
+				})
+			})
+        });
+    }
+});
 
 
 // Whenever the tab changes/reloads/redirects, check if its an instance before injecting
@@ -38,7 +55,6 @@ function checkInstance(tab) {
 		// This is the first time; lets get instance list from storage
 		chrome.storage.local.get(['instanceList'], (result) => {
 			if (result.instanceList) {
-				console.log('first time getting instance list');
 				instanceList = result.instanceList
 				injectApp(tab)
 			}

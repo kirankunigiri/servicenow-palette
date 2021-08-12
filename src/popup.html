@@ -7,29 +7,53 @@
 	<title>ServiceNow Palette</title>
 </head>
 <body>
-	<div class="popup--title">ServiceNow Palette</div>
-	<div class="popup--description">
+	<div class="header">
+		<img class="logo" src="servicenow.png" alt="ServiceNow Logo">
+		<div class="popup--title">ServiceNow Palette</div>
+	</div>
+	<div class="hint popup--description">
 		<ul class="feature-list">
 			<li>Palette search</li>
 			<li>Keyboard shortcuts</li>
 			<li>Tab management</li>
 		</ul> 
 		<b>Instructions:</b> Activate for an instance using the checkbox while on a ServiceNow tab. <br>
-		<b>Login:</b> You will then be prompted to enter your ServiceNow login credentials to enable palette search.
+		<b>Login:</b> You will then be prompted to enter your ServiceNow login credentials to enable palette search. <br>
+		<b>Search:</b> Use the Control+I keyboard shortcut to activate smart search. Use the arrow keys or mouse for autocompletion, hit enter to search, or use tab to start a filter query.
 	</div>
 
 	<div id="currentInstance">
+		<div id="showHints">
+			<input @change="hintChanged($event)" type="checkbox" id="showHintsInput" name="showHintsInput" value="showHintsInput"> <span id="showHintsText">Show Hints</span> <br>
+		</div>
 		<input @change="check($event)" v-if="name != ''" type="checkbox" id="currentInstanceInput" name="currentInstanceInput" value="currentInstanceInput">
 		<label v-if="name != ''" id="currentInstanceLabel" for="currentInstanceInput">Active: {{name}}</label>
 	</div>
 
+	<hr>
 	<div id="now-instances">
 		<div class="now-instances--title">My Instances</div>
-		<div v-for="instance in instances" :key="instance" class="instance-row">
-			<span class="instance-delete" v-on:click="doDelete(index)">✖ </span>
+		<div class="hint now-instances--description">Click on the instance URL to open a new tab. Click on a tab to open it in the window.</div>
+		<div v-for="instance in instances" :key="instance" class="instance-row" @click="clickInstance($event)"">
+			<!-- <span class="delete instance-delete" v-on:click="doDelete(index)">✖ </span> -->
 			{{instance}}
+			<div v-for="tab in filterTabsByInstance(instance)" :key="tab.id" class="tab-row" @click="clickTab($event)">{{tab.title}}</div>
 		</div>
 	</div>
+
+	<hr>
+	<div id="shortcuts">
+		<div class="shortcuts--title">My Shortcuts</div>
+		<div v-for="keymap in keymaps" :key="keymap.xpath" class="shortcut-row">
+			<span v-if="keymap.name != 'Palette Search'" class="delete keymap-delete">✖ &nbsp;</span>
+			{{keymap.name}}
+			<input type="text" v-on:keydown="keydown" v-on:keyup="keyup" autocomplete="off" :key="keymap.xpath" class="keymap-input" v-bind:value="keymap.mapping.join(' & ')">
+		</div>
+		<button v-on:click="addShortcut" id="addShortcutBtn">Add Shortcut</button>
+	</div>
+
+	<div class="hint addShortcutsDescription">To add a shortcut, click the above button. All available buttons on the instance page will be highlighted red, and you can click on one the one you want to enable shortcuts for. Then return to this popup and bind your shortcut key.</div>
+	<div class="hint disclaimerDescription">Note: This app is in beta. If something doesn't work, please try refreshing the page.</div>
 
 </body>
 

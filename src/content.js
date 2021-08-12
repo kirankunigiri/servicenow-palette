@@ -1,6 +1,14 @@
 var onload2 = function(){};
 
 console.log('adding listener');
+chrome.runtime.onMessage.addListener(
+	function(request, sender, sendResponse) {
+		console.log(request);
+	  if (request.cmd === "addShortcut") {
+		  highlightButtons()
+	  }
+	}
+);
 
 // const MAX_RESULTS_PER_SECTION = 8
 

@@ -259,7 +259,7 @@ function getData(state, searchText, firstTag) {
 	// console.log('STATE: ' + JSON.stringify(state))
 	switch (state) {
 		case filterState.TABLE:
-			fuseRenderList = [DB_TABLES, DB_MODULES]
+			fuseRenderList = [DB_TABLES] //[DB_TABLES, DB_MODULES]
 			break;
 		case filterState.FIELD:
 			fuseRenderList = [DB_FIELDS]
