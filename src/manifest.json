@@ -1,7 +1,7 @@
 {
 	"name": "ServiceNow Palette",
 	"version": "1.0.0",
-	"description": "A chrome extension for ServiceNow",
+	"description": "A chrome extension for ServiceNow that enables smart search, keyboard shortcuts, and tab management",
 	"manifest_version": 2,
 	"background": {
 		"scripts": [

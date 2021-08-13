@@ -1,6 +1,6 @@
 # Logs
 /dist
-/src/lib
+
 logs
 *.log
 npm-debug.log*
