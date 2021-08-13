@@ -8,7 +8,7 @@ Here's a video that quickly shows how to use all of the features! I highly recom
 
 ***
 ## Setup 
-This extension is currently  awaiting approval in the Chorme Extension store, so you must install it manually. First, download this repository by clicking here. Then navigate to chrome://extensions, turn on developer mode, and click "load unpacked" at the top left corner. Then select the directory of the folder you just downloaded, and you're ready to go! (see the video for a visual guide on installing this)
+This extension is currently  awaiting approval in the Chrome Extension store, so you must install it manually. **Watch the video or check the GIF at the bottom of the page for visual instructions on installation.** First, download this repository by clicking here. Then navigate to chrome://extensions, turn on developer mode, and click "load unpacked" at the top left corner. Then select the directory of the folder you just downloaded, and you're ready to go!
 
 **To activate features for an instance, you must click on the extension icon, and then click on the checkbox while on the URL of an instance to activate the instance.** This will ask you to login using your instance credentials if you want to use Spotlight Search, but tab management and keyboard shortcuts will still work without logging in. You must go through this activation process for each instance you want to use it with
 
@@ -38,6 +38,15 @@ An extremely powerful keyboard shortcut creator and re-mapper! By default, short
 
 ## Tab Management
 See all of your tabs organized by instance right in the chrome extension at the top right! (This only works for activated instances) Click on a tab to navigate to it in Chrome, or click on the instance title to open a new tab for that instance.
+
+## Install Setup
+Here's a GIF on how to install the extension. If you don't want all the extra instruction text at the top of the page, uncheck the "Show Hints" box at the top right.
+
+![install](demo/install.gif)
+
+Activate for an instance.
+
+![activate](demo/activate.gif)
 
 ### For Developers
 Want to add a new data source to spotlight search? Just create a new SearchDB class in the datamanager.js file, and Palette will automatically populate the search with the data you return! Be sure to wrap it in a promise if you're returning data asynchronously, and check out the other SearchDB classes as reference. It's built to be highly modular.
