@@ -174,6 +174,11 @@ const setEquality = (a, b) => a.size === b.size && [...a].every(value => b.has(v
 
 function windowKeyUp(e) {			// On key up
 	activeKeys.delete(e.code)
+
+	// For macOS, the command keyUp event blocks all other keyUp events. Instead, we can manually clear the activeKeys
+	if (e.code == 'MetaLeft' || e.code == 'MetaRight') {
+		activeKeys.clear()
+	}
 }
 function windowKeyDown(e) {			// On key down
 	activeKeys.add(e.code)
