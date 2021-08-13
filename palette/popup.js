@@ -10,9 +10,6 @@ var instanceData = {
 }
 var keymapData = {
 	keymaps: [
-		{ name: 'Palette Search', xpath: "palette_search", mapping: ["ControlLeft", "KeyI"]},
-		{ name: 'Save', xpath: "//*[@id='sysverb_update']", mapping: ["ControlLeft", "KeyS"]},
-		{ name: 'Delete', xpath: "//*[@id='sysverb_delete']", mapping: ["ControlLeft", "Backspace"]}
 	]
 }
 var showHints = true
@@ -37,12 +34,15 @@ function activateInstance() {
 // Load keyboard shortcuts
 chrome.storage.local.get(['keymapList'], (result) => {
 	if (!result.keymapList) {
-		// First time default keyboard shortcuts
-		chrome.storage.local.set({ keymapList: [
-			{ name: 'Palette Search', xpath: "palette_search", mapping: ["ControlLeft", "KeyI"]},
-			{ name: 'Save', xpath: "//*[@id='sysverb_update']", mapping: ["ControlLeft", "KeyS"]},
-			{ name: 'Delete', xpath: "//*[@id='sysverb_delete']", mapping: ["ControlLeft", "Backspace"]}
-		] })
+		// First time default keyboard shortcuts. If using mac, use Command Key instead
+		var modifierKey = "ControlLeft"
+		if (navigator.platform.toUpperCase().indexOf('MAC')>=0) modifierKey="MetaLeft"
+		keymapData.keymaps = [
+			{ name: 'Palette Search', xpath: "palette_search", mapping: [modifierKey, "KeyI"]},
+			{ name: 'Update', xpath: "//*[@id='sysverb_update']", mapping: [modifierKey, "KeyS"]},
+			{ name: 'Delete', xpath: "//*[@id='sysverb_delete']", mapping: [modifierKey, "Backspace"]}
+		]
+		chrome.storage.local.set({ keymapList: keymapData.keymaps })
 	} else {
 		keymapData.keymaps = result.keymapList
 	}

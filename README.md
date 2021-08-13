@@ -1,6 +1,6 @@
 # ServiceNow Palette
 A chrome extension that brings 3 new features to ServiceNow
-* Spotlight search
+* Smart search
 * Tab management
 * Keyboard shortcuts
 
@@ -10,9 +10,9 @@ Here's a video that quickly shows how to use all of the features! I highly recom
 ## Setup 
 This extension is currently  awaiting approval in the Chrome Extension store, so you must install it manually. **Watch the video or check the GIF at the bottom of the page for visual instructions on installation.** First, download this repository by [clicking here](https://github.com/kirankunigiri/servicenow-palette/releases/download/1.0/palette.zip). Then navigate to chrome://extensions, turn on developer mode, and click "load unpacked" at the top left corner. Then select the "palette" folder inside of the folder you just downloaded, and you're ready to go!
 
-**To activate features for an instance, you must click on the extension icon, and then click on the checkbox while on the URL of an instance to activate the instance.** This will ask you to login using your instance credentials if you want to use Spotlight Search, but tab management and keyboard shortcuts will still work without logging in. You must go through this activation process for each instance you want to use it with
+**To activate features for an instance, you must click on the extension icon, and then click on the checkbox while on the URL of an instance to activate the instance.** This will ask you to login using your instance credentials if you want to use Smart Search, but tab management and keyboard shortcuts will still work without logging in. You must go through this activation process for each instance you want to use it with
 
-## Spotlight Search
+## Smart Search
 This is by far the most useful feature - it will save you a lot of time with its crazy fast navigation, filtering, and table search. Press the Control+I keyboard sortcut to activate it, start typing in the name of the table you want to see, and it will automatically start filtering realtime. It also has fuzzysearch, which means it will still find matches if you misspell the word! This makes it really easy to find what you need. After finding a table, there's 3 different ways to proceed
 1. Press enter to automatically open the first table in the results. If you want something further down the list, use your arrow keys to select it and then press enter, or click on it and then press enter.
 
@@ -28,7 +28,7 @@ This is by far the most useful feature - it will save you a lot of time with its
 ## Keyboard Shortcuts
 An extremely powerful keyboard shortcut creator and re-mapper! By default, shortcuts already exist for the Update (Control+S) and Delete (Control+Delete) buttons while viewing a record. If you scroll to the bottom of the chrome extension, a list of these shortcuts will appear.
 
-**Remapping:** To change any of these shortcuts (including the one that brings up Spotlight Search), you can click on the text box and type in the shortcut keys you want! It automatically records and saves your new shortcut combination.
+**Remapping:** To change any of these shortcuts (including the one that brings up Smart Search), you can click on the text box and type in the shortcut keys you want! It automatically records and saves your new shortcut combination.
 
 **Note:** On a Mac, it's recommended to remap the search shortcut to Command+I instead of leaving it at the default of Control+I.
 
@@ -49,4 +49,4 @@ Activate for an instance.
 ![activate](demo/activate.gif)
 
 ### For Developers
-Want to add a new data source to spotlight search? Just create a new SearchDB class in the datamanager.js file, and Palette will automatically populate the search with the data you return! Be sure to wrap it in a promise if you're returning data asynchronously, and check out the other SearchDB classes as reference. It's built to be highly modular.
+Want to add a new data source to Smart Search? Just create a new SearchDB class in the datamanager.js file, and Palette will automatically populate the search with the data you return! Be sure to wrap it in a promise if you're returning data asynchronously, and check out the other SearchDB classes as reference. It's built to be highly modular.
