@@ -1,6 +1,5 @@
 var onload2 = function(){};
 
-console.log('adding listener');
 chrome.runtime.onMessage.addListener(
 	function(request, sender, sendResponse) {
 		console.log(request);

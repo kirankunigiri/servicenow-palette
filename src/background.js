@@ -22,8 +22,10 @@ chrome.runtime.onConnect.addListener(function(port) {
 
 
 // Whenever the tab changes/reloads/redirects, check if its an instance before injecting
+// Only don't inject if an iframe is being loaded
 chrome.webNavigation.onCommitted.addListener((details) => {
-    if (["reload", "link", "typed", "generated"].includes(details.transitionType)) {
+    if (!["auto_subframe", "manual_subframe"].includes(details.transitionType)) {
+		console.log('looking for tabs');
 		chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
 			if (details.url && details.url == tabs[0].url) {
 				checkInstance(tabs[0])
@@ -72,7 +74,8 @@ function injectApp(tab) {
 	var url = new URL(tab.url)
 	if (instanceList.includes(url.host)) {
 		console.log('planning to inject');
-		chrome.tabs.insertCSS(tabId, {file: "spotlight.css" });
+		chrome.tabs.insertCSS(tabId, {file: "css/opensans.css" });
+		chrome.tabs.insertCSS(tabId, {file: "css/spotlight.css" });
 		chrome.tabs.executeScript(tabId, {file: "lib.min.js"})
 		chrome.tabs.executeScript(tabId, {file: "content.js"})
 		chrome.tabs.executeScript(tabId, {file: "datamanager.js"})

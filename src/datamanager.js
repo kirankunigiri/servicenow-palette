@@ -53,27 +53,43 @@ function() {
 	// console.log(`Loading: ${this.name} Data`)
 	var fuseDB = this.fuse
 	if (fuseDB._docs.length > 0) {
+		console.log('FuseDB is already running, no need to get data')
 		return
 	}
 
-	// Table API Request
-	const instanceUrl = `https://${window.location.host}/api/now/table/sys_db_object?sysparm_fields=name,label`
+	var tableVariable = `table${location.host}`
 	return new Promise(function (resolve, reject) {
-		fetch(instanceUrl)
-			.then(response => response.json())
-			.then(data => {
-				var res = data.result.map(item => {
-					item.name = item.name
-					item.display_name = item.label
-					delete item.label
-					return item
-				})
-				fuseDB.setCollection(res)
-				resolve(res)
-			})
-			.catch((error) => {
-				console.error('Error:', error);
-			  });
+		chrome.storage.local.get([tableVariable], (result) => {
+			console.log(result);
+			if (!result[tableVariable]) {
+				// First time - get tables from API
+				console.log('First time loading table data.')
+				const instanceUrl = `https://${window.location.host}/api/now/table/sys_db_object?sysparm_fields=name,label`
+				
+					fetch(instanceUrl)
+					.then(response => response.json())
+					.then(data => {
+						var res = data.result.map(item => {
+							item.name = item.name
+							item.display_name = item.label
+							delete item.label
+							return item
+						})
+						console.log('updating ' + tableVariable)
+						chrome.storage.local.set({ [tableVariable]: res })
+						fuseDB.setCollection(res)
+						resolve(res)
+					})
+					.catch((error) => {
+						console.error('Error:', error);
+					})
+			} else {
+				// Already have table data in local storage
+				console.log('Loaded table data from localstorage.')
+				fuseDB.setCollection(result[tableVariable])
+				resolve(result[tableVariable])
+			}
+		})
 	})
 
 },

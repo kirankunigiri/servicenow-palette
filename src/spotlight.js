@@ -176,9 +176,7 @@ function windowKeyUp(e) {			// On key up
 	activeKeys.delete(e.code)
 
 	// For macOS, the command keyUp event blocks all other keyUp events. Instead, we can manually clear the activeKeys
-	if (e.code == 'MetaLeft' || e.code == 'MetaRight') {
-		activeKeys.clear()
-	}
+	if (e.code == 'MetaLeft' || e.code == 'MetaRight') { activeKeys.clear() }
 }
 function windowKeyDown(e) {			// On key down
 	activeKeys.add(e.code)
@@ -206,11 +204,6 @@ function windowKeyDown(e) {			// On key down
 			mapButton(e, new Set(keymap.mapping), keymap.xpath)
 		}
 	}
-
-	// if (setEquality(activeKeys, new Set(["ControlLeft", "KeyB"]))) {
-	// 	e.preventDefault()
-	// 	highlightButtons()
-	// }
 }
 
 // Maps a button to a div selector
@@ -287,6 +280,7 @@ function highlightButtons() {
 	}
 }
 
+// Finds the xpath of an element
 function xpath(el) {
 	if (typeof el == "string") return document.evaluate(el, document, null, 0, null)
 	if (!el || el.nodeType != 1) return ''
@@ -294,9 +288,6 @@ function xpath(el) {
 	var sames = [].filter.call(el.parentNode.children, function (x) { return x.tagName == el.tagName })
 	return xpath(el.parentNode) + '/' + el.tagName.toLowerCase() + (sames.length > 1 ? '['+([].indexOf.call(sames, el)+1)+']' : '')
 }
-// highlightButtons()
-//*[@id='user_info_dropdown']
-// document.evaluate("//*[@id='sc_task_filter_toggle_nlq_image']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.innerHTML;
 
 
 
@@ -305,7 +296,7 @@ function xpath(el) {
 // -------------------------------------------------------------------------
 onload2 = function() {
 
-	// Add a ton of listeners to document, html, and iframes
+	// Add listeners to document, html, and iframes
 	document.addEventListener("keydown", windowKeyDown)
 	document.addEventListener("keyup", windowKeyUp)
 
@@ -443,7 +434,7 @@ onload2 = function() {
 				// GENERAL TEXT SEARCH
 				// Someone has entered in text. Check if there is a tag, and only proceed if there is 1 tag
 				var tableName = getTableTag().name
-				url = `https://${window.location.host}/${tableName}_list.do?sysparm_query=GOTO123TEXTQUERY321=${getSearchText()}`;
+				url = `https://${window.location.host}/${tableName}_list.do?sysparm_query=GOTO123TEXTQUERY321=*${getSearchText()}`;
 			} else {
 				// LIST TABLE
 				// Get whatever is currently selected

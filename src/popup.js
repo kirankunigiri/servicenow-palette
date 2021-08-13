@@ -186,6 +186,8 @@ var keymapsApp = new Vue({
 	methods: {
 		keyup: function(e) {
 			activeKeys.delete(e.code)
+			// For macOS, the command keyUp event blocks all other keyUp events. Instead, we can manually clear the activeKeys
+			if (e.code == 'MetaLeft' || e.code == 'MetaRight') { activeKeys.clear() }
 		},
 		keydown: function(e) {
 			e.preventDefault()
