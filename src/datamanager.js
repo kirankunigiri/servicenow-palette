@@ -19,6 +19,37 @@ const OPTIONS = {
 		threshold: FUSE_THRESHOLD
 }
 
+
+
+// -------------------------------------------------------------------------
+// Cache API Setup
+// -------------------------------------------------------------------------
+// Caching sys_choice_set for autocompletion on choice list fields
+const choicelistVariable = `choicelist${location.host}`
+var choicelistMap = {}
+// chrome.storage.local.remove([choicelistVariable])
+chrome.storage.local.get([choicelistVariable], (result) => {
+	if (!result[choicelistVariable]) {
+		// First time - get tables from API
+		const instanceUrl = `https://${window.location.host}/api/now/table/sys_choice_set?sysparm_fields=name,element`
+		fetch(instanceUrl)
+		.then(response => response.json())
+		.then(data => {
+			// Convert into hashmap in format {table: [choicefields]} for speed and size optimization
+			for (var item of data.result) {
+				if (!choicelistMap[item.name]) choicelistMap[item.name] = []
+				choicelistMap[item.name].push(item.element)
+			}
+			chrome.storage.local.set({ [choicelistVariable]: choicelistMap })
+		})
+		.catch((error) => {
+			console.error('Error:', error);
+		})
+	} else {
+		choicelistMap = result[choicelistVariable]
+	}
+})
+
 // -------------------------------------------------------------------------
 // Fuse Instance Setup
 // -------------------------------------------------------------------------
@@ -43,27 +74,30 @@ class SearchDB {
 		}
 		return this.fuse.search(text)
 	}
+
+	isEmpty() {
+		return this.fuse._docs == 0
+	}
 }
 
 
-// DB Tables
+// -------------------------------------------------------------------------
+// DB - Tables
+// -------------------------------------------------------------------------
 var DB_TABLES = new SearchDB('Tables', 
 // Load Data
 function() {
 	// console.log(`Loading: ${this.name} Data`)
 	var fuseDB = this.fuse
 	if (fuseDB._docs.length > 0) {
-		console.log('FuseDB is already running, no need to get data')
 		return
 	}
 
 	var tableVariable = `table${location.host}`
 	return new Promise(function (resolve, reject) {
 		chrome.storage.local.get([tableVariable], (result) => {
-			console.log(result);
 			if (!result[tableVariable]) {
 				// First time - get tables from API
-				console.log('First time loading table data.')
 				const instanceUrl = `https://${window.location.host}/api/now/table/sys_db_object?sysparm_fields=name,label`
 				
 					fetch(instanceUrl)
@@ -85,7 +119,6 @@ function() {
 					})
 			} else {
 				// Already have table data in local storage
-				console.log('Loaded table data from localstorage.')
 				fuseDB.setCollection(result[tableVariable])
 				resolve(result[tableVariable])
 			}
@@ -100,7 +133,9 @@ function(item) {
 
 
 
-// DB Fields
+// -------------------------------------------------------------------------
+// DB - Fields
+// -------------------------------------------------------------------------
 function getFieldList(table) {
 	// Table Field API Request
 	const instanceUrl = `https://${window.location.host}/api/now/table/sys_dictionary?sysparm_fields=sys_name,element&name=${table}`
@@ -117,6 +152,7 @@ function getFieldList(table) {
 						item.display_name = item.name.replaceAll('_', ' ')
 						item.display_name = item.display_name.replace(/\b\w/g, function(l){ return l.toUpperCase() })
 					}
+					item.table = table
 					return item
 				})
 				res = res.filter(item => item.display_name != '' && item.name != '');
@@ -130,18 +166,18 @@ function findSuperClass(table) {
 	const instanceUrl = `https://${window.location.host}/api/now/table/sys_db_object?sysparm_fields=name,super_class&name=${table}`
 	return new Promise(function (resolve, reject) {
 		fetch(instanceUrl)
+		.then(response => response.json())
+		.then(data => {
+			if (data.result[0].super_class == '') {
+				resolve(null)
+			}
+			var superClassUrl = data.result[0].super_class.link + '?sysparm_fields=name'
+			fetch(superClassUrl)
 			.then(response => response.json())
 			.then(data => {
-				if (data.result[0].super_class == '') {
-					resolve(null)
-				}
-				var superClassUrl = data.result[0].super_class.link + '?sysparm_fields=name'
-				fetch(superClassUrl)
-				.then(response => response.json())
-				.then(data => {
-					resolve(data.result.name)
-				})
+				resolve(data.result.name)
 			})
+		})
 	})
 }
 
@@ -149,7 +185,8 @@ function updateFieldList(table, fieldList, callback) {
 	getFieldList(table).then(result => {
 		// console.log('got field list for ' + table);
 		fieldList = fieldList.concat(result)
-		findSuperClass(table).then(superclass => {
+		findSuperClass(table)
+		.then(superclass => {
 			if (!superclass) {
 				callback(fieldList)
 			} else {
@@ -161,11 +198,12 @@ function updateFieldList(table, fieldList, callback) {
 
 var DB_FIELDS = new SearchDB('Fields', function() {
 	// console.log(`Loading: ${this.name} Data`)
+
+	// Don't run API if on the same table
 	var table = tagsData.tags[0].name
-	if (this.cachedTable && this.cachedTable == table) {
-		return
-	}
+	if (this.cachedTable && this.cachedTable == table) { return }
 	this.cachedTable = table
+
 	console.log('SWITCHED TO FIELD MODE FOR ' + tagsData.tags[0].name)
 	var fuseDB = this.fuse
 
@@ -177,6 +215,50 @@ var DB_FIELDS = new SearchDB('Fields', function() {
 		})
 	})
 })
+
+
+
+// -------------------------------------------------------------------------
+// DB - Choices (for field)
+// -------------------------------------------------------------------------
+
+// DB Choice
+var DB_CHOICES = new SearchDB('Choices', function() {
+	
+	const field = tagsData.tags.at(-2)
+	if (this.cachedField && this.cachedField == field) { return }
+	this.cachedField = field
+	var fuseDB = this.fuse
+	
+	return new Promise(function (resolve, reject) {
+		if (field.table in choicelistMap && choicelistMap[field.table].includes(field.name)) {
+			// This field is a choice list! Let's grab the available options
+			const instanceUrl = `https://${window.location.host}/api/now/table/sys_choice?sysparm_fields=label,value&name=${field.table}&element=${field.name}`
+			fetch(instanceUrl)
+			.then(response => response.json())
+			.then(data => {
+				console.log(data.result);
+				var res = data.result.map(item => {
+					item.name = item.value
+					item.display_name = item.label
+					delete item.value
+					delete item.label
+					return item
+				})
+				fuseDB.setCollection(res)
+				resolve(res)
+			})
+		} else {
+			resolve()
+		}
+	})
+})
+
+
+
+// -------------------------------------------------------------------------
+// DB - Others
+// -------------------------------------------------------------------------
 
 // DB Operators
 var DB_OPERATORS = new SearchDB('Operators', function() {
@@ -284,6 +366,7 @@ function getData(state, searchText, firstTag) {
 			fuseRenderList = [DB_OPERATORS]
 			break;
 		case filterState.TEXT:
+			fuseRenderList = [DB_CHOICES]
 			break;
 		default:
 			break;
@@ -292,7 +375,9 @@ function getData(state, searchText, firstTag) {
 	var promises = fuseRenderList.map(fuse => fuse.loadData())
 	Promise.all(promises).then((res) => {
 		for (let fuse of fuseRenderList) {
-			sections.push({name: fuse.name, results: fuse.search(searchText).slice(0, MAX_RESULTS_PER_SECTION)})
+			if (!fuse.isEmpty()) {
+				sections.push({name: fuse.name, results: fuse.search(searchText).slice(0, MAX_RESULTS_PER_SECTION)})
+			}
 		}
 	})
 	// for (let fuse of fuseRenderList) {

@@ -10,7 +10,6 @@ var filterState = {
 	OPERATOR: "Operators",
 	TEXT: "Enter your search query",
 }
-var resultsData = getData(filterState.current, '')
 // console.log(resultsData);
 var tagsData = {
 	tags: [
@@ -19,6 +18,7 @@ var tagsData = {
 		// {name: 'equals', display_name: '='}
 	]
 }
+var resultsData = getData(getFilterState(), '')
 
 function toggleSpotlightSearch() {
 	var x = document.getElementById("spotlight");
@@ -32,8 +32,7 @@ function toggleSpotlightSearch() {
 function clearSearch() {
 	getSpotlightInput().value = ''
 	tagsData.tags = []
-	updateFilterState()
-	resultsData.sections = getData(filterState.current, '').sections
+	resultsData.sections = getData(getFilterState(), '').sections
 }
 
 function getSpotlightInput() {
@@ -48,14 +47,25 @@ function getTableTag() {
 	}
 }
 function getFilterURL() {
-	var table = getTableTag().name
+	var searchString = ''
+	var tableName = tagsData.tags[0].name
 	var tags = tagsData.tags
-	var filters = []
-	for (var i = 1; i < tags.length; i+= 3) {
-		var filter = tags[i].name + tags[i+1].display_name + tags[i+2].display_name
-		filters.push(filter)
+	for (var i = 1; i < tags.length; i += 3) {
+		// If the tag is a choice value, use =. If its a text value, use LIKE*
+		var operator = tags[i+1].display_name
+		if (tags[i+2].type == 'text' && operator == '=') operator = 'LIKE'
+		var param = tags[i+2].name.replaceAll(' ', '%20')
+		searchString += tags[i].name + operator + param
 	}
-	return getFilterBlockSearch(table, filters)
+	return `https://${window.location.host}/${tableName}_list.do?sysparm_query=${searchString}`;
+	// var table = getTableTag().name
+	// var tags = tagsData.tags
+	// var filters = []
+	// for (var i = 1; i < tags.length; i+= 3) {
+	// 	var filter = tags[i].name + tags[i+1].display_name + tags[i+2].display_name
+	// 	filters.push(filter)
+	// }
+	// return getFilterBlockSearch(table, filters)
 }
 
 
@@ -74,10 +84,10 @@ function resetArrowSelection() {
 }
 
 // Used to get the active row selection data item, and section name, on click/tab/enter
-function getActiveSelection() {
-	if (selectionIndex == -1) {
-		selectionIndex = 0
-	}
+function getActiveSelection(useFirstAsDefault) {
+	console.log(selectionIndex);
+	if (selectionIndex == -1 && useFirstAsDefault) selectionIndex = 0
+	if (selectionIndex == -1 && !useFirstAsDefault) return undefined
 	var total = 0
 	for (i in resultsData.sections) {
 		total += resultsData.sections[i].results.length
@@ -91,49 +101,44 @@ function getActiveSelection() {
 	}
 }
 
-function updateFilterState() {
+function getFilterState() {
 	const tagCount = tagsData.tags.length
 	if (tagCount == 0) {
-		filterState.current = filterState.TABLE
+		return filterState.TABLE
 	} else {
 		let index = (tagCount - 1) % 3
-		filterState.current = [filterState.FIELD, filterState.OPERATOR, filterState.TEXT][index]
+		return [filterState.FIELD, filterState.OPERATOR, filterState.TEXT][index]
 	}
 }
 
 // Updates the filter state and gets the appropriate tables
 function updateResults() {
-	updateFilterState()
-	resultsData.sections = getData(filterState.current, getSearchText(), getTableTag()).sections
+	resultsData.sections = getData(getFilterState(), getSearchText(), getTableTag()).sections
 }
 
 function addTag() {
-	selection = getActiveSelection()
 	// Only allow tags for filters. TODO: Only add filter tags for DBs with the filter property. They will also contain an array of DBs that will be used, and whether this can be repeated infinitely
-	if (selection && ![DB_TABLES.name, DB_OPERATORS.name, DB_FIELDS.name].includes(selection.section)) {
-		return
+	// if (selection && ![DB_TABLES.name, DB_OPERATORS.name, DB_FIELDS.name].includes(selection.section)) {
+	// 	return
+	// }
+	if (getFilterState() == filterState.TEXT) {
+		selection = getActiveSelection(false)
+		console.log(selection);
+	} else {
+		selection = getActiveSelection(true)
 	}
-	updateFilterState()
-
-	// Create tag values
-	var tagDisplayName
-	var tagID
 
 	// If we're in the text state, just directly add that as a tag
-	if (filterState.current == filterState.TEXT) {
-		if (getSearchText() == '') { return }
-		tagDisplayName = getSearchText()
-		tagID = 'text'
+	if (selection == undefined) {
+		if (getSearchText() == '' || getFilterState() != filterState.TEXT) { return }
+		tagsData.tags.push({name: getSearchText(), display_name: getSearchText(), type: 'text'})
 	} else {
 		// If we're not in a text state, then we will use the selection
-		tagDisplayName = selection.display_name
-		var tagID = selection.name
+		tagsData.tags.push(selection)
 	}
 
-	// Adding the table tag. We should also load the filters to get ready for filtering mode
-	tagsData.tags.push({name: tagID, display_name: tagDisplayName})
+	// Get new results
 	getSpotlightInput().value = ''
-	
 	updateResults()
 	selectionIndex = -1
 }
@@ -254,9 +259,7 @@ function highlightButtons() {
 		new_element.addEventListener("click", function (e) {
 			e.preventDefault()
 			e.stopPropagation();
-            e.stopImmediatePropagation();
-			console.log(this.textContent);
-			console.log(xpath(this));
+            e.stopImmediatePropagation()
 			// Add new keyboard shortcut
 			keymapList.push({ name: this.textContent, xpath: xpath(this), mapping: ''})
 			chrome.storage.local.set({ keymapList: keymapList })
@@ -421,10 +424,10 @@ onload2 = function() {
 			if (numTags > 1) {
 				// FILTER SEARCH
 				// There is more than one tag, so apply filters. It has to be divisible by 3 so the filters are proper
-				console.log((numTags-1) % 3)
 				if ((numTags-1) % 3 == 0) {
 					url = getFilterURL()
-				} else if ((numTags-1) % 3 == 2 && getSearchText() != '') {
+				} else if ((numTags-1) % 3 == 2 && (getSearchText() != '' || getActiveSelection() != undefined)){//&& getSearchText() != '') {
+					console.log(getActiveSelection());
 					addTag()
 					url = getFilterURL()
 				} else {
@@ -440,9 +443,9 @@ onload2 = function() {
 				// Get whatever is currently selected
 				console.log('list table mode');
 				var table
-				var selection = getActiveSelection()
-				if (tagsData.tags.length == 0 && getActiveSelection()) {
-					table = getActiveSelection().name
+				var selection = getActiveSelection(true)
+				if (tagsData.tags.length == 0 && selection) {
+					table = selection.name
 				} else if (getTableTag()) {
 					console.log('getting table tag of ' + getTableTag().name);
 					table = getTableTag().name
@@ -451,14 +454,12 @@ onload2 = function() {
 				url = `https://${window.location.host}/nav_to.do?uri=%2F${table}_list.do`
 
 				// Change URL if it's a module TODO: Re Enable when modules are back
-				// if (getActiveSelection().section == DB_MODULES.name) {
+				// if (selection.section == DB_MODULES.name) {
 				// 	url = selection.name
 				// }
 
 			}
-			// var tab = tabGroup.getActiveTab()
-			// tab.webview.loadURL(url)
-			console.log('NEW URL FORMED: ');
+
 			console.log(url);
 			window.location.href = url
 			toggleSpotlightSearch()
@@ -478,10 +479,16 @@ onload2 = function() {
 				getSpotlightInput().focus()
 				addTag()
 			},
-			// Mouse Hover
+			// Mouse Hover (use mouseover and mouseleave to fix a bug where the selection automatically moves to the mouse position as soon as you open spotlight)
 			mouseover: function (event) {
+				if (this.hover) return
+				this.hover = true
 				selectionIndex = indexInClass(document.getElementsByClassName('spotlight--results-item'), event.currentTarget)
 				updateSelectedRow()
+			},
+			// Mouse Leave
+			mouseleave: function (event) {
+				this.hover = false
 			}
 		}
 	})

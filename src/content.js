@@ -87,7 +87,7 @@ window.onload = () => {
 
 			<!-- Vue loop for results in each section -->
 			<div v-for="result in section.results" :key="result">
-				<div class="spotlight--results-item" v-on:click="select($event)" v-on:mouseover="mouseover($event)">{{ result.item.display_name }} <span class="variable-name">{{result.item.name}}</span> </div>
+				<div class="spotlight--results-item" v-on:click="select($event)" v-on:mousemove="mouseover($event)" v-on:mouseleave="mouseleave($event)">{{ result.item.display_name }} <span class="variable-name">{{result.item.name}}</span> </div>
 			</div>
 
 			<div class="spotlight--results-divider"></div>
