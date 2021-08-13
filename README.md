@@ -8,7 +8,7 @@ Here's a video that quickly shows how to use all of the features! I highly recom
 
 ***
 ## Setup 
-This extension is currently  awaiting approval in the Chrome Extension store, so you must install it manually. **Watch the video or check the GIF at the bottom of the page for visual instructions on installation.** First, download this repository by clicking here. Then navigate to chrome://extensions, turn on developer mode, and click "load unpacked" at the top left corner. Then select the directory of the folder you just downloaded, and you're ready to go!
+This extension is currently  awaiting approval in the Chrome Extension store, so you must install it manually. **Watch the video or check the GIF at the bottom of the page for visual instructions on installation.** First, download this repository by [clicking here](https://github.com/kirankunigiri/servicenow-palette/releases/download/1.0/palette.zip). Then navigate to chrome://extensions, turn on developer mode, and click "load unpacked" at the top left corner. Then select the "palette" folder inside of the folder you just downloaded, and you're ready to go!
 
 **To activate features for an instance, you must click on the extension icon, and then click on the checkbox while on the URL of an instance to activate the instance.** This will ask you to login using your instance credentials if you want to use Spotlight Search, but tab management and keyboard shortcuts will still work without logging in. You must go through this activation process for each instance you want to use it with
 
