@@ -55,8 +55,9 @@ function getFilterURL() {
 		var operator = tags[i+1].display_name
 		if (tags[i+2].type == 'text' && operator == '=') operator = 'LIKE'
 		var param = tags[i+2].name.replaceAll(' ', '%20')
-		searchString += tags[i].name + operator + param
+		searchString += tags[i].name + operator + param + '^'
 	}
+	searchString = searchString.slice(0, -1)
 	return `https://${window.location.host}/${tableName}_list.do?sysparm_query=${searchString}`;
 	// var table = getTableTag().name
 	// var tags = tagsData.tags
