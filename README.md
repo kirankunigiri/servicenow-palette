@@ -12,6 +12,8 @@ This extension is currently  awaiting approval in the Chrome Extension store, so
 
 **To activate features for an instance, you must click on the extension icon, and then click on the checkbox while on the URL of an instance to activate the instance.** This will ask you to login using your instance credentials if you want to use Smart Search, but tab management and keyboard shortcuts will still work without logging in. You must go through this activation process for each instance you want to use it with
 
+**Note:** There’s a bug that breaks this on instances that use 2 factor authentication, but that will be fixed soon.
+
 ## Smart Search
 This is by far the most useful feature - it will save you a lot of time with its crazy fast navigation, filtering, and table search. Press the Control+I keyboard sortcut to activate it, start typing in the name of the table you want to see, and it will automatically start filtering realtime. It also has fuzzysearch, which means it will still find matches if you misspell the word! This makes it really easy to find what you need. After finding a table, there's 3 different ways to proceed
 1. Press enter to automatically open the first table in the results. If you want something further down the list, use your arrow keys to select it and then press enter, or click on it and then press enter.
