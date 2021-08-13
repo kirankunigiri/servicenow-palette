@@ -50,6 +50,45 @@ chrome.storage.local.get([choicelistVariable], (result) => {
 	}
 })
 
+
+
+// Caching fields
+// const fieldVariable = `field${location.host}`
+// console.log(fieldVariable);
+// var fieldMap = {}
+// chrome.storage.local.remove([fieldVariable])
+// chrome.storage.local.get([fieldVariable], (result) => {
+// 	if (!result[fieldVariable]) {
+// 		// First time - get tables from API
+// 		const instanceUrl = `https://${window.location.host}/api/now/table/sys_dictionary?sysparm_fields=sys_name,element,name`
+// 		fetch(instanceUrl)
+// 		.then(response => response.json())
+// 		.then(data => {
+// 			// Convert into hashmap in format {table: [choicefields]} for speed and size optimization
+// 			for (var item of data.result) {
+// 				if (item.name == 'task') console.log('sc task item ' + item.element);
+// 				if (!fieldMap[item.name]) fieldMap[item.name] = []
+// 				var name = item.element
+// 				var display_name = item.sys_name
+// 				fieldMap[item.name].push({name, display_name})
+// 			}
+// 			console.log(fieldMap)
+// 			console.log(fieldMap['task'])
+// 			chrome.storage.local.set({ [fieldVariable]: fieldMap })
+// 		})
+// 		.catch((error) => {
+// 			console.error('Error:', error);
+// 		})
+// 	} else {
+// 		// fieldMap = result[fieldVariable]
+// 	}
+// })
+
+
+
+// Caching list of table names
+var tableList = []
+
 // -------------------------------------------------------------------------
 // Fuse Instance Setup
 // -------------------------------------------------------------------------
@@ -98,32 +137,69 @@ function() {
 		chrome.storage.local.get([tableVariable], (result) => {
 			if (!result[tableVariable]) {
 				// First time - get tables from API
-				const instanceUrl = `https://${window.location.host}/api/now/table/sys_db_object?sysparm_fields=name,label`
-				
-					fetch(instanceUrl)
-					.then(response => response.json())
-					.then(data => {
-						var res = data.result.map(item => {
-							item.name = item.name
-							item.display_name = item.label
-							delete item.label
-							return item
-						})
-						console.log('updating ' + tableVariable)
-						chrome.storage.local.set({ [tableVariable]: res })
-						fuseDB.setCollection(res)
-						resolve(res)
-					})
-					.catch((error) => {
-						console.error('Error:', error);
-					})
+				console.log('getting api data');
+				const instanceUrl = `https://${window.location.host}/api/now/table/sys_db_object?sysparm_fields=name,label,super_class,sys_id&sysparm_exclude_reference_link=true`
+				fetch(instanceUrl)
+				.then(response => response.json())
+				.then(data => {
+					var idLookup = {}
+					// console.log(data);
+					for (var item of data.result) {
+						idLookup[item.sys_id] = item.name
+					}
+					for (var item of data.result) {
+						var name = item.name
+						var display_name = item.label
+						var superclass = idLookup[item.super_class]
+						tableList.push({name, display_name, superclass})
+					}
+					chrome.storage.local.set({ [tableVariable]: tableList })
+					fuseDB.setCollection(tableList)
+					resolve(tableList)
+				})
+				.catch((error) => {
+					console.error('Error:', error);
+				})
 			} else {
-				// Already have table data in local storage
-				fuseDB.setCollection(result[tableVariable])
-				resolve(result[tableVariable])
+				tableList = result[tableVariable]
+				fuseDB.setCollection(tableList)
+				resolve(tableList)
 			}
 		})
 	})
+	
+
+	// var tableVariable = `table${location.host}`
+	// return new Promise(function (resolve, reject) {
+	// 	chrome.storage.local.get([tableVariable], (result) => {
+	// 		if (!result[tableVariable]) {
+	// 			// First time - get tables from API
+	// 			// const instanceUrl = `https://${window.location.host}/api/now/table/sys_db_object?sysparm_fields=name,label`
+				
+	// 			// 	fetch(instanceUrl)
+	// 			// 	.then(response => response.json())
+	// 			// 	.then(data => {
+	// 			// 		var res = data.result.map(item => {
+	// 			// 			item.name = item.name
+	// 			// 			item.display_name = item.label
+	// 			// 			delete item.label
+	// 			// 			return item
+	// 			// 		})
+	// 			// 		console.log('updating ' + tableVariable)
+	// 			// 		chrome.storage.local.set({ [tableVariable]: res })
+	// 			// 		fuseDB.setCollection(res)
+	// 			// 		resolve(res)
+	// 			// 	})
+	// 			// 	.catch((error) => {
+	// 			// 		console.error('Error:', error);
+	// 			// 	})
+	// 		} else {
+	// 			// Already have table data in local storage
+	// 			fuseDB.setCollection(result[tableVariable])
+	// 			resolve(result[tableVariable])
+	// 		}
+	// 	})
+	// })
 
 },
 // Select Action
@@ -162,7 +238,7 @@ function getFieldList(table) {
 }
 
 function findSuperClass(table) {
-	// Table Field API Request
+	// Super class API Request (no longer in use due to optimizations from caching)
 	const instanceUrl = `https://${window.location.host}/api/now/table/sys_db_object?sysparm_fields=name,super_class&name=${table}`
 	return new Promise(function (resolve, reject) {
 		fetch(instanceUrl)
@@ -185,14 +261,15 @@ function updateFieldList(table, fieldList, callback) {
 	getFieldList(table).then(result => {
 		// console.log('got field list for ' + table);
 		fieldList = fieldList.concat(result)
-		findSuperClass(table)
-		.then(superclass => {
+		var superclass = tableList.filter(t => t.name == table)[0].superclass
+		// findSuperClass(table)
+		// .then(superclass => {
 			if (!superclass) {
 				callback(fieldList)
 			} else {
 				updateFieldList(superclass, fieldList, callback)
 			}
-		})
+		// })
 	})
 }
 
